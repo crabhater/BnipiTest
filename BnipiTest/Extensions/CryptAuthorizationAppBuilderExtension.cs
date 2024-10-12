@@ -13,8 +13,13 @@ namespace BnipiTest.Extensions
         {
             app.Use(async (context, next) =>
             {
+                if (context.Request.Path.StartsWithSegments("/api/Authorization"))
+                {
+                    await next();//пропукаем эндпоинт для авторизации
+                    return;
+                }
                 _crypt = new Crypt();
-                var message = await new StreamReader(context.Request.Body).ReadToEndAsync();
+                
                 var signature = context.Request.Headers["Data"];
                 var uuid = context.Request.Headers["UUID"]; //Для поиска по БД токена авторизации, в данном случае не используем, так как не сохраняем токен
                 var thumbPrint = context.Request.Headers["ThumbPrint"];

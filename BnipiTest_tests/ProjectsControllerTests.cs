@@ -74,7 +74,7 @@ namespace BnipiTest_tests
         }
         
         [Fact]
-        public async Task CreateProject_ShouldAddProjectAndReturnCreatedResult()
+        public async Task CreateProject_shouldAddProjectAndReturnCreatedResult()
         {
             // Arrange
             _context.Database.EnsureCreated();
