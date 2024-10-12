@@ -65,15 +65,18 @@ namespace BnipiTest.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
-            return await _context.Projects.Include(e=>e.DesignObjects)
+            var proj = await _context.Projects.Include(e=>e.DesignObjects)
                                           .ThenInclude(e=>e.Documents)
                                           .ToListAsync();
+            return Ok(proj);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Project>> GetProjectById(int id)
         {
-            var project = await _context.Projects.Include(e=> e.DesignObjects).ThenInclude(e=>e.Documents).FirstOrDefaultAsync(e=> e.Id == id);
+            var project = await _context.Projects.Include(e => e.DesignObjects)
+                                                 .ThenInclude(e => e.Documents)
+                                                 .FirstOrDefaultAsync(e=> e.Id == id);
             if (project == null)
             {
                 var errorMsg = new ErrorMessage("Проект не найден!");
@@ -85,7 +88,8 @@ namespace BnipiTest.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<DesignObject>> GetDesignObject(int id)
         {
-            var designObject = await _context.DesignObjects.Include(e => e.Documents).FirstOrDefaultAsync(e => e.Id == id);
+            var designObject = await _context.DesignObjects.Include(e => e.Documents)
+                                                           .FirstOrDefaultAsync(e => e.Id == id);
             if (designObject == null)
             {
                 var errorMsg = new ErrorMessage("Объект проектирования не найден!");
@@ -107,12 +111,6 @@ namespace BnipiTest.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProject(int id, Project project)
         {
-            if (id != project.Id)
-            {
-                var errorMsg = new ErrorMessage("Неверный Id");
-                return BadRequest();
-            }
-
             _context.Entry(project).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
@@ -133,6 +131,7 @@ namespace BnipiTest.Controllers
 
             return NoContent();
         }
+
     }
 
 }
