@@ -9,7 +9,8 @@ namespace BnipiTest.Models
         }
         public DbSet<Project> Projects { get; set; }
         public DbSet<DesignObject> DesignObjects { get; set; }
-        public DbSet<Document> DocumentationSets { get; set; }
+        public DbSet<Document> Documents { get; set; }
+        public DbSet<Mark> Marks { get; set; }
 
         public ProjectContext()
         {
@@ -18,6 +19,10 @@ namespace BnipiTest.Models
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
+        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

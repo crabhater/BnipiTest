@@ -2,6 +2,7 @@
 using BnipiTest.Extensions;
 using BnipiTest.Models;
 using BnipiTest.Models.InterfacesLib;
+using BnipiTest.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -29,14 +30,88 @@ namespace BnipiTest_tests
         }
 
         [Fact]
+        public async Task GetProjectDetails()
+        {
+            //arrange
+            _context.Database.EnsureDeleted();
+            _context.Database.EnsureCreated();
+
+            var concreteId = 1;
+
+            _context.Projects.Add(new Project { Cipher = "P1", Name = "Проект 1" });
+            _context.Projects.Add(new Project { Cipher = "P2", Name = "Проект 2" });
+
+            await _context.SaveChangesAsync();
+
+            _context.DesignObjects.Add(new DesignObject { Code = "1.1", Name = "Объект 1.1", ProjectId = concreteId });
+            _context.DesignObjects.Add(new DesignObject { Code = "1.2", Name = "Объект 1.2", ProjectId = concreteId });
+            var childDesignObject111 = new DesignObject
+            {
+                Code = "1.1.1",
+                Name = "Дочерний объект 1.1.1",
+                ParentDesignObjectId = concreteId,
+                ProjectId = concreteId
+            };
+            _context.Add(childDesignObject111);
+
+            await _context.SaveChangesAsync();
+
+
+            await _context.SaveChangesAsync();
+
+            var markTH = new Mark { ShortName = "ТХ", Name = "Технология производства" };
+            var markAC = new Mark { ShortName = "АС", Name = "Архитектурно-строительные решения" };
+            var markCM = new Mark { ShortName = "СМ", Name = "Сметная документация" };
+            _context.Add(markTH);
+            _context.Add(markAC);
+            _context.Add(markCM);
+            _context.SaveChanges();
+
+            var docSet1 = new Document { MarkId = markAC.Id, Number = 0, DesignObjectId = concreteId};
+            var docSet2 = new Document { MarkId = markTH.Id, Number = 1, DesignObjectId = concreteId };
+            var docSet3 = new Document { MarkId = markCM.Id, Number = 3, DesignObjectId = childDesignObject111.Id };
+
+
+            _context.Documents.AddRange(docSet1, docSet2, docSet3);
+            _context.SaveChanges();
+
+            //act
+            var result = await _controller.GetProjectDetails(concreteId);
+
+            //assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnProjects = Assert.IsType<List<DocumentsViewModel>>(okResult.Value);
+            Assert.Equal(3, returnProjects.Count);
+        }
+
+
+        [Fact]
         public async Task GetProjects_ShouldReturnAllProjects()
         {
             //arrange
             _context.Database.EnsureDeleted();
             _context.Database.EnsureCreated();
 
-            _context.Projects.Add(new Project { Code = "P1", Name = "Проект 1" });
-            _context.Projects.Add(new Project { Code = "P2", Name = "Проект 2" });
+            var concreteId = 1;
+
+            _context.Projects.Add(new Project { Cipher = "P1", Name = "Проект 1" });
+            _context.Projects.Add(new Project { Cipher = "P2", Name = "Проект 2" });
+
+            await _context.SaveChangesAsync();
+
+            _context.DesignObjects.Add(new DesignObject { Code = "1.1", Name = "Объект 1.1", ProjectId = concreteId });
+            _context.DesignObjects.Add(new DesignObject { Code = "1.2", Name = "Объект 1.2", ProjectId = concreteId });
+
+            await _context.SaveChangesAsync();
+
+            var childDesignObject111 = new DesignObject
+            {
+                Code = "1.1.1",
+                Name = "Дочерний объект 1.1.1",
+                ParentDesignObjectId = concreteId,
+                ProjectId = concreteId
+            };
+
             await _context.SaveChangesAsync();
 
             //act
@@ -54,14 +129,29 @@ namespace BnipiTest_tests
             //arrange
             _context.Database.EnsureDeleted();
             _context.Database.EnsureCreated();
+            var concreteId = 1;
 
-            _context.Projects.Add(new Project { Code = "P1", Name = "Проект 1" });
-            _context.Projects.Add(new Project { Code = "P2", Name = "Проект 2" });
+            _context.Projects.Add(new Project { Cipher = "P1", Name = "Проект 1" });
+            _context.Projects.Add(new Project { Cipher = "P2", Name = "Проект 2" });
+
             await _context.SaveChangesAsync();
 
-            var concreteId = 2;
+            _context.DesignObjects.Add(new DesignObject { Code = "1.1", Name = "Объект 1.1", ProjectId = concreteId });
+            _context.DesignObjects.Add(new DesignObject { Code = "1.2", Name = "Объект 1.2", ProjectId = concreteId });
+
+            await _context.SaveChangesAsync();
+
+            var childDesignObject111 = new DesignObject
+            {
+                Code = "1.1.1",
+                Name = "Дочерний объект 1.1.1",
+                ParentDesignObjectId = concreteId,
+                ProjectId = concreteId
+            };
+
+            await _context.SaveChangesAsync();
+
             var concreteProj = await _context.Projects.Include(e => e.DesignObjects)
-                                                      .ThenInclude(e => e.Documents)
                                                       .FirstOrDefaultAsync(e => e.Id == concreteId);
 
             //act
@@ -78,7 +168,7 @@ namespace BnipiTest_tests
         {
             // Arrange
             _context.Database.EnsureCreated();
-            var newProject = new Project { Code = "P3", Name = "Проект 3" };
+            var newProject = new Project { Cipher = "P3", Name = "Проект 3" };
 
             // Act
             var result = await _controller.CreateProject(newProject);
@@ -95,7 +185,7 @@ namespace BnipiTest_tests
         {
             // Arrange
             _context.Database.EnsureCreated();
-            var existingProject = new Project { Code = "P1-Updated", Name = "Проект 1 (обновлен)" };
+            var existingProject = new Project { Cipher = "P1-Updated", Name = "Проект 1 (обновлен)" };
             _context.Projects.Add(existingProject);
             await _context.SaveChangesAsync();
 
@@ -105,7 +195,7 @@ namespace BnipiTest_tests
             // Assert
             Assert.IsType<NoContentResult>(result);
             var updatedProject = await _context.Projects.FindAsync(existingProject.Id);
-            Assert.Equal("P1-Updated", updatedProject.Code);
+            Assert.Equal("P1-Updated", updatedProject.Cipher);
             Assert.Equal("Проект 1 (обновлен)", updatedProject.Name);
         }
         [Fact]
@@ -113,7 +203,7 @@ namespace BnipiTest_tests
         {
             // Arrange
             _context.Database.EnsureCreated();
-            var projectToDelete = new Project {Code = "P1", Name = "Проект 1" };
+            var projectToDelete = new Project {Cipher = "P1", Name = "Проект 1" };
             _context.Projects.Add(projectToDelete);
             await _context.SaveChangesAsync();
 
